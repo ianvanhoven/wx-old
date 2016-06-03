@@ -11,4 +11,3 @@ la_post = requests.post( la_url , data=la_data) ;
 print la_post.text.encode( 'utf-8' ) ;
 
 # fin
-# fin
