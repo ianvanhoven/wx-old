@@ -1,5 +1,7 @@
 #! /usr/bin/python
 
+# $id$
+
 import requests ;
 import wxcore ;
 
