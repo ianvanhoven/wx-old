@@ -11,6 +11,7 @@ import time ;
 # +---------+
 
 api_url = 'https://rest.developer.yodlee.com/services/srest/restserver/v1.0/' ;
+api_hdr_json = { 'Content-Type' : 'application/json' , 'Accept' : 'application/json' } ;
 
 
 # +----------------------------------------------+

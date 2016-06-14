@@ -1,15 +1,10 @@
 #! /usr/bin/python
 
-# $id$
+import wxacct ;
 
-import requests ;
-import wxcore ;
+al_dict = wxacct.list() ;
 
-# list accounts
-la_auth = wxcore.auth() ;
-la_data = { 'cobSessionToken' : la_auth[0] , 'userSessionToken' : la_auth[1] } ;
-la_url  = wxcore.api_url + '/jsonsdk/SiteAccountManagement/getAllSiteAccounts' ;
-la_post = requests.post( la_url , data=la_data) ;
-print la_post.text.encode( 'utf-8' ) ;
+for id in al_dict:
+    print str( id ).strip() , '::' , al_dict[ id ] ;
 
 # fin
