@@ -1,0 +1,2 @@
+cobrand-username
+cobrand-token
