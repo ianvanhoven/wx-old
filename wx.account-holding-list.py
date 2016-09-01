@@ -18,67 +18,76 @@ import wxacct ;
 import wxcore ;
 
 
-# +-----------------------------------------------------------+
-# | create sorted list of account items (stock accounts only) |
-# +-----------------------------------------------------------+
+# payload
+ah_out_txt = '' ;
+
+
+# +--------------------------------------------------------------+
+# | create sorted list of account items...                       |
+# | - stock accounts only (i.e., no loan, mortgage, ccard, etc.) |
+# +--------------------------------------------------------------+
 
 ai_dict = wxacct.list_acct_item() ;
-ah_dict = {} ; # dict to hold account item data
-ah_list = [] ; # list to hold account item IDs
+ah_dict = {} ; # dict to hold account item data (for output)
+ah_list = [] ; # list to hold account item IDs (for iteration)
 
 i = 0 ;
 
 for ai_item_key , ai_item_val in sorted( ai_dict.items() , key=lambda x: x[1] ): # sort dict by tuple values
-    if ai_item_val[1] == 'stocks': # omit credit, loan, etc. (i.e., accts w/out holdings)
-        ah_list.append( ai_item_key ) ; # all accounts
+    if ai_item_val[1] == 'stocks': # omit accts w/out holdings
+        ah_list.append( ai_item_key ) ; # all account (*)
         ah_dict.update( { i : [ ai_item_key , ai_item_val[0] ] } ) ;
         i += 1 ;
 
 
-# +--------------------------------------------+
-# | single account: show valid account choices |
-# +--------------------------------------------+
+# +-----------------------------------------+
+# | single account: show valid account menu |
+# +-----------------------------------------+
 
 if ah_aon == '1':
-    print '\nActive Accounts...' ;
+    print '\nActive Accounts...\n' ;
     for ah_item_key , ah_item_val in sorted( ah_dict.items() ):
-        print '[' + str( ah_item_key ) + '] ' + ah_item_val[1] + ' (' + str( ah_item_val[0] ) + ')' ;
+        print ' [' + str( ah_item_key ) + '] ' + ah_item_val[1] + ' (' + str( ah_item_val[0] ) + ')' ;
 
     ah_one = raw_input( "\nEnter the line [#] of the account...\n> " ) ;
 
-    # overwrite list of ALL account IDs w/ the user-specified ID
+    # * = overwrite list of ALL account IDs w/ the user-specified ID
     ah_list = [ ah_dict[ int( ah_one ) ][0] ] ;
 
 
-# +------------------------------------------------------+
-# | request params for list of (a)ccount item (h)oldings |
-# +------------------------------------------------------+
-
-ah_auth = wxcore.auth() ;
-ah_url  = wxcore.api_url + '/jsonsdk/DataService/getItemSummaryForItem1' ;
+# +---------------------------------------------------+
+# | for item(s) -- 1 or all -- get holdings json blob |
+# +---------------------------------------------------+
 
 # iterate over account items
 for item in ah_list:
 
-    ah_data = {
-        'cobSessionToken'     : ah_auth[0] ,
-        'userSessionToken'    : ah_auth[1] ,
-        'itemId'              : item ,
-        'dex.startLevel'      : 0 ,
-        'dex.endLevel'        : 0 ,
-        'dex.extentLevels[0]' : 0 ,
-        'dex.extentLevels[1]' : 2
-    } ;
+    # kludge!
+    item_id = item ;
 
-    # http post -> json response
-    ah_post = requests.post( ah_url , data=ah_data ) ;
-    ah_json = json.loads( ah_post.text ) ;
+    # get item holdings
+    ah_json = wxacct.list_acct_item_holding( item_id ) ;
 
     # debug: json output
     # print ah_json ; exit(0) ;
 
-    # init output
-    ah_hold_out = '' ;
+    # ascii-box
+    box_dsh = '' ;
+    len_nm  = len( ah_json[ 'itemDisplayName' ] ) ;
+    len_id  = len( str( item_id ) ) ;
+    len_all = len_nm + len_id + 18 ;
+    for x in range ( 1 , len_all ): box_dsh += '-' ;
+
+    # top-level account label
+    ah_out_txt += \
+        '\n' + \
+        '+' + box_dsh + '+\n' + \
+        '| HOLDINGS :: ' + \
+        ah_json[ 'itemDisplayName' ] + \
+        ' (' + \
+        str( item_id ) + \
+        ') |\n' + \
+        '+' + box_dsh + '+\n' ;
 
     # how many account items?
     ah_acct_num = len( ah_json[ 'itemData' ][ 'accounts' ] ) ;
@@ -86,14 +95,19 @@ for item in ah_list:
     # iterate over account items
     for i in range( ah_acct_num ):
 
-        ah_hold_out += \
-            '\nHoldings: ' + \
-            ah_json[ 'itemDisplayName' ] + \
-            ' -- ' + \
+        # debug: account JSON
+        # print ah_json[ 'itemData' ][ 'accounts' ][i] ;
+
+        # init output vars
+        ah_out_dict = {} ;
+
+        # acct descriptor
+        ah_out_txt += \
+            '\n' + \
             ah_json[ 'itemData' ][ 'accounts' ][i][ 'accountName' ] + \
             ' (' + \
-            str( item ) + \
-            ') ...\n' ;
+            str( ah_json[ 'itemData' ][ 'accounts' ][i][ 'itemAccountId' ] ) + \
+            ')...\n' ;
 
         # at least 1 holding -> get details
         if 'holdings' in ah_json[ 'itemData' ][ 'accounts' ][i]:
@@ -106,40 +120,54 @@ for item in ah_list:
 
                 # some investments don't have symbols :(
                 ah_hold_sym = '' ;
-                if 'symbol' in ah_json:
-                    ah_hold_sym = str( ah_json[ 'itemData' ][ 'accounts' ][i][ 'holdings' ][j][ 'symbol' ] ) + ' :: ' ;
+                if 'symbol' in ah_json[ 'itemData' ][ 'accounts' ][i][ 'holdings' ][j]:
+                    ah_hold_sym = ah_json[ 'itemData' ][ 'accounts' ][i][ 'holdings' ][j][ 'symbol' ] ;
 
-                ah_hold_dsc = str( ah_json[ 'itemData' ][ 'accounts' ][i][ 'holdings' ][j][ 'description' ] ) ;
+                # vars
                 ah_hold_val =      ah_json[ 'itemData' ][ 'accounts' ][i][ 'holdings' ][j][ 'value' ][ 'amount' ] ;
+                ah_hold_dsc =      ah_json[ 'itemData' ][ 'accounts' ][i][ 'holdings' ][j][ 'description' ] ;
                 ah_hold_qty = str( ah_json[ 'itemData' ][ 'accounts' ][i][ 'holdings' ][j][ 'quantity' ] ) ;
                 ah_hold_pri = str( ah_json[ 'itemData' ][ 'accounts' ][i][ 'holdings' ][j][ 'price' ][ 'amount' ] ) ;
 
-                ah_hold_out += \
-                    '-- $' + \
-                    '{:,.2f}'.format( ah_hold_val ).rjust(13) + ' :: ' + \
-                    ah_hold_sym + \
-                    ah_hold_dsc + ' :: ' + \
+                ah_hold_txt = \
+                    ah_hold_sym + ' (' + \
+                    ah_hold_dsc + ') >> ' + \
                     ah_hold_qty + ' @ $' + \
                     ah_hold_pri + '\n' ;
 
-        # no holdings: show equity balances instead
+                # stuff dict (item)
+                ah_out_dict.update( { ah_hold_val : ah_hold_txt } ) ;
+
+        # no holdings -> show equity balances
         else:
 
-            # (e)quity (b)alance :: (t)otal
-            ah_hold_ebt = ah_json[ 'itemData' ][ 'accounts' ][i][ 'totalBalance' ][ 'amount' ] ;
-            ah_hold_out += '-- $' + '{:,.2f}'.format( ah_hold_ebt ).rjust(13) + ' :: balance (total) \n' ;
+            # equity balance :: total
+            if 'totalBalance' in ah_json[ 'itemData' ][ 'accounts' ][i]:
+                ah_hold_val = ah_json[ 'itemData' ][ 'accounts' ][i][ 'totalBalance' ][ 'amount' ] ;
+                ah_hold_txt = 'Balance (Total)\n' ;
+                ah_out_dict.update( { ah_hold_val : ah_hold_txt } ) ;
 
-            # (e)quity (b)alance :: (u)nvested
+            # equity balance :: total (unvested)
             if 'totalUnvestedBalance' in ah_json[ 'itemData' ][ 'accounts' ][i]:
-                ah_hold_ebu = ah_json[ 'itemData' ][ 'accounts' ][i][ 'totalUnvestedBalance' ][ 'amount' ] ;
-                ah_hold_out += '-- $' + '{:,.2f}'.format( ah_hold_ebu ).rjust(13) + ' :: balance (unvested) \n' ;
+                ah_hold_val = ah_json[ 'itemData' ][ 'accounts' ][i][ 'totalUnvestedBalance' ][ 'amount' ] ;
+                ah_hold_txt = 'Balance (Unvested)\n' ;
+                ah_out_dict.update( { ah_hold_val : ah_hold_txt } ) ;
 
-            # (e)quity (b)alance :: (v)ested
+            # equity balance :: total (vested)
             if 'totalVestedBalance' in ah_json[ 'itemData' ][ 'accounts' ][i]:
-                ah_hold_ebv = ah_json[ 'itemData' ][ 'accounts' ][i][ 'totalVestedBalance' ][ 'amount' ] ;
-                ah_hold_out += '-- $' + '{:,.2f}'.format( ah_hold_ebv ).rjust(13) + ' :: balance (vested) \n' ;
+                ah_hold_val = ah_json[ 'itemData' ][ 'accounts' ][i][ 'totalVestedBalance' ][ 'amount' ] ;
+                ah_hold_txt = 'Balance (Vested)\n' ;
+                ah_out_dict.update( { ah_hold_val : ah_hold_txt } ) ;
 
-    # spew
-    print ah_hold_out ;
+        # iterate over dict to build output string
+        for item in sorted( ah_out_dict , reverse=True ):
+            ah_out_txt += \
+                ' $' + \
+                '{:,.2f}'.format( item ).rjust(13) + \
+                ' :: ' + \
+                ah_out_dict[ item ] ;
+
+# spew
+print ah_out_txt ;
 
 # fin
