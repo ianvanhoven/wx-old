@@ -15,7 +15,7 @@ import time ;
 # | globals |
 # +---------+
 
-api_dir = '/space/home/ivh/tool/wealthx/' ;
+api_dir = '/opt/wealthx/' ;
 api_dir_data = api_dir + 'data/' ;
 api_hdr_json = { 'Content-Type' : 'application/json' , 'Accept' : 'application/json' } ;
 api_hdr_xml = { 'Content-Type' : 'application/xml' , 'Accept' : 'application/xml' } ;
