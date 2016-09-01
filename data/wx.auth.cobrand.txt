@@ -1,2 +1,2 @@
-cobrand-username
-cobrand-token
+$cobrand-username
+$cobrand-token
