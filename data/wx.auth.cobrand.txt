@@ -1,2 +1,2 @@
-$cobrand-username
-$cobrand-token
+$yodlee-cobrand-username
+$yodlee-cobrand-token

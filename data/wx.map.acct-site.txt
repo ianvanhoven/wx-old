@@ -1,4 +1,5 @@
-$AccountSiteID1#$AccountSiteDesc1
-$AccountSiteID2#$AccountSiteDesc2
-$AccountSiteID3#$AccountSiteDesc3
-$AccountSiteIDN#$AccountSiteDescN
+$account-site-id-1#$account-site-desc-1
+$account-site-id-2#$account-site-desc-2
+$account-site-id-3#$account-site-desc-3
+[ ... ]
+$account-site-id-N#$account-site-desc-N

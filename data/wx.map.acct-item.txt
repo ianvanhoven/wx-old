@@ -1,4 +1,5 @@
-$AccountItemID1#$AccountDesc1
-$AccountItemID2#$AccountDesc2
-$AccountItemID3#$AccountDesc3
-$AccountItemIDN#$AccountDescN
+$account-item-id-1#$account-desc-1
+$account-item-id-2#$account-desc-2
+$account-item-id-3#$account-desc-3
+[ ... ]
+$account-item-id-N#$account-desc-N
