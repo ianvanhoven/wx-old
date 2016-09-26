@@ -35,7 +35,7 @@ def auth():
     # - co-brand token expires every 100m
     # - user login token expires every 30m
     # ...which is annoying/pointless...
-    # ...so 29m as co-expiry for simplicity
+    # ...so use 29m as co-expiry for simplicity
 
     wx_auth_dir = api_dir + 'data/' ;
     wx_auth_token_new = 1 ;
