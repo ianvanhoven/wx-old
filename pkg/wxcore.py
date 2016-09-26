@@ -8,6 +8,7 @@
 import json ;
 import os.path ;
 import requests ;
+import sys ;
 import time ;
 
 
@@ -15,11 +16,13 @@ import time ;
 # | globals |
 # +---------+
 
-api_dir = '/opt/wealthx/' ;
+api_dir = '/space/home/ivh/tool/wealthx/' ;
 api_dir_data = api_dir + 'data/' ;
 api_hdr_json = { 'Content-Type' : 'application/json' , 'Accept' : 'application/json' } ;
 api_hdr_xml = { 'Content-Type' : 'application/xml' , 'Accept' : 'application/xml' } ;
 api_url = 'https://rest.developer.yodlee.com/services/srest/restserver/v1.0/' ;
+
+pkg_file = os.path.basename(__file__) ;
 
 
 # +----------------------------------------------+
@@ -36,15 +39,22 @@ def auth():
 
     wx_auth_dir = api_dir + 'data/' ;
     wx_auth_token_new = 1 ;
-    wx_auth_token_txt = wx_auth_dir + 'wx.auth.token.txt' ;
+    wx_auth_token_file = 'wx.auth.token.txt' ;
+    wx_auth_token_path = wx_auth_dir + wx_auth_token_file ;
     wx_time_now = int( time.time() ) ;
 
     # check presence/age of existing auth tokens
-    if os.path.isfile( wx_auth_token_txt ):
+    if os.path.isfile( wx_auth_token_path ):
 
-        f = open( wx_auth_token_txt , 'r' ) ;
+        f = open( wx_auth_token_path , 'r' ) ;
         wx_auth_token_data = f.readlines() ;
         f.close() ;
+
+        # successful read/load? payload s/b 104 bytes
+        print sys.getsizeof( wx_auth_token_data ) ;
+        if sys.getsizeof( wx_auth_token_data ) <= 100:
+            print '[pkg/' + pkg_file + '] ERROR: Cannot read token auth file (data/' + wx_auth_token_file + ')' ;
+            exit(1) ;
 
         # use existing unexpired tokens
         wx_time_old = int( wx_auth_token_data[0] ) ;
@@ -53,7 +63,9 @@ def auth():
             ul_auth = wx_auth_token_data[2] ;
             wx_auth_token_new = 0 ;
 
-    else: print '[pkg/wxcore.py] ERROR: Cannot find/open token auth file' ; exit(1) ;
+    else:
+        print '[pkg/' + pkg_file + '] ERROR: Cannot find token auth file (data/' + wx_auth_token_file + ')' ;
+        exit(1) ;
 
     # existing auth tokens missing or expired: create/store new tokens
     if wx_auth_token_new == 1:
@@ -91,7 +103,7 @@ def auth():
         ul_auth = ul_dict[ 'userContext' ][ 'conversationCredentials' ][ 'sessionToken' ] ;
 
         # write time + tokens to auth file
-        f = open( wx_auth_token_txt , 'w' ) ;
+        f = open( wx_auth_token_path , 'w' ) ;
         f.write( '{:.0f}'.format( wx_time_now ) + '\n' + cb_auth + '\n' + ul_auth ) ;
         f.close() ;
 

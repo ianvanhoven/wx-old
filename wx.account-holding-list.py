@@ -15,7 +15,6 @@ if ah_aon == '0': print "Exiting\n" ; exit(0) ;
 import json ;
 import requests ;
 import wxacct ;
-import wxcore ;
 
 
 # payload
